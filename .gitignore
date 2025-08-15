@@ -1,0 +1,83 @@
+# ===== Python 基础 =====
+__pycache__/
+*.py[cod]
+*.pyo
+*.pdb
+
+# 虚拟环境
+venv/
+env/
+.venv/
+ENV/
+
+# 打包 & 发布
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# 测试 / 覆盖率
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+
+# ===== C / C++ / Cython 编译产物 =====
+*.c
+*.cpp
+*.h
+*.hpp
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.pyd
+*.exp
+*.manifest
+*.mod
+*.pyx.c
+*.pyx.cpp
+*.html   # Cython 生成的 html 分析文件
+
+# Nuitka 编译输出
+__nuitka_build__/
+.nuitka_cache/
+
+
+# ===== 操作系统文件 =====
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+
+# ===== IDE / 编辑器 =====
+# PyCharm / IntelliJ
+.idea/
+
+# VS Code
+.vscode/
+
+# Eclipse / JetBrains 其他
+*.iml
+
+
+# ===== 日志 / 临时文件 =====
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
