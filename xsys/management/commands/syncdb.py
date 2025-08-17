@@ -66,9 +66,10 @@ class Command(BaseCommand):
                 self.stdout.write(f'Processing app: {app_config.label}')
                 self.create_tables_for_app(app_config, database, sql_file_path)
             except LookupError:
+                available_apps = ", ".join([app.label for app in apps.get_app_configs()])
                 self.stdout.write(
                     self.style.ERROR(
-                        f'App "{app_label}" not found. Available apps: {", ".join([app.label for app in apps.get_app_configs()])}')
+                        f'App "{app_label}" not found. Available apps: {available_apps}')
                 )
                 return
         # 如果传了两个参数，只处理指定app下的指定model
@@ -86,16 +87,21 @@ class Command(BaseCommand):
                     model = app_config.get_model(model_name)
                     self.create_table_for_model(model, database, sql_file_path)
                 except LookupError:
+                    available_models = ", ".join([m.__name__ for m in app_config.get_models()])
                     self.stdout.write(
                         self.style.ERROR(
-                            f'Model "{model_name}" not found in app "{app_label}". Available models: {", ".join([m.__name__ for m in app_config.get_models()])}')
+                            f'Model "{model_name}" not found in app "{app_label}". '
+                            f'Available models: {available_models}')
                     )
+
                     return
             except LookupError:
+                available_apps = ", ".join([app.label for app in apps.get_app_configs()])
                 self.stdout.write(
                     self.style.ERROR(
-                        f'App "{app_label}" not found. Available apps: {", ".join([app.label for app in apps.get_app_configs()])}')
+                        f'App "{app_label}" not found. Available apps: {available_apps}')
                 )
+
                 return
 
         self.stdout.write(
@@ -122,10 +128,26 @@ class Command(BaseCommand):
 
                 # 修复DatabaseSchemaEditor缺少_create_table_sql方法的问题
                 # 使用正确的API来生成SQL语句
-                sql_statement = schema_editor.sql_create_table % {
-                    "table": schema_editor.quote_name(table_name),
-                    "definition": schema_editor._model_to_create_sql(model),
-                }
+                columns = []
+                for field in model._meta.fields:
+                    # column_sql 返回的是一个tuple，我们需要的是第一个元素（SQL片段）
+                    column_sql = schema_editor.column_sql(model, field)
+                    if isinstance(column_sql, tuple):
+                        # 修复：需要包含列名和列定义
+                        column_def = column_sql[0]
+                        column_name = schema_editor.quote_name(field.column)
+                        columns.append(f"{column_name} {column_def}")
+                    else:
+                        column_name = schema_editor.quote_name(field.column)
+                        columns.append(f"{column_name} {column_sql}")
+
+                # 构建列定义部分
+                coldefs = ", ".join(columns)
+                
+                # 添加主键自增定义（如果适用）
+                if columns:
+                    # 修复：使用正确的SQL模板
+                    sql_statement = f"CREATE TABLE {schema_editor.quote_name(table_name)} ({coldefs})"
 
                 # 将SQL语句写入文件
                 with open(sql_file_path, 'a') as f:
@@ -146,28 +168,3 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.ERROR(f'    Error generating SQL for {model._meta.db_table}: {str(e)}')
                 )
-
-    # 添加一个辅助方法来生成模型的SQL定义
-    def _model_to_create_sql(self, schema_editor, model):
-        """
-        生成模型的CREATE TABLE语句定义部分
-        """
-        # 收集所有字段的SQL定义
-        column_sqls = []
-        for field in model._meta.local_fields:
-            # 获取字段的SQL定义
-            field_sql = schema_editor.column_sql(model, field)
-            column_sqls.append(
-                "%s %s" % (
-                    schema_editor.quote_name(field.column),
-                    field_sql,
-                )
-            )
-
-        # 添加主键约束
-        if model._meta.pk and model._meta.pk.column:
-            column_sqls.append(
-                "PRIMARY KEY (%s)" % schema_editor.quote_name(model._meta.pk.column)
-            )
-
-        return ", ".join(column_sqls)
