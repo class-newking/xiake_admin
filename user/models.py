@@ -4,6 +4,7 @@ from django.db import models
 
 
 class UserInfo(models.Model):
+    id = models.AutoField(primary_key=True)
     username = models.CharField(max_length=100, verbose_name='用户名', unique=True)
     email = models.EmailField(verbose_name='邮箱地址')
     age = models.IntegerField(verbose_name='年龄', blank=True, null=True)
