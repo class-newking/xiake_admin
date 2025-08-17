@@ -1,0 +1,9 @@
+annotated-types==0.7.0
+Django==2.2.28
+django-ninja==1.0.1
+pydantic==2.10.6
+pydantic_core==2.27.2
+PyMySQL==1.1.1
+pytz==2025.2
+sqlparse==0.5.3
+typing_extensions==4.13.2
