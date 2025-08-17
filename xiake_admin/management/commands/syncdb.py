@@ -18,10 +18,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         database = options['database']
         self.stdout.write(f'Syncing database: {database}')
-        
+
         # 获取所有已安装的应用
         app_configs = apps.get_app_configs()
-        
+
         # 创建所有模型的表
         for app_config in app_configs:
             self.stdout.write(f'Processing app: {app_config.label}')
@@ -31,7 +31,7 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.ERROR(f'Error creating tables for {app_config.label}: {str(e)}')
                 )
-        
+
         self.stdout.write(
             self.style.SUCCESS('Successfully synced database')
         )
@@ -39,14 +39,14 @@ class Command(BaseCommand):
     def create_tables_for_app(self, app_config, database):
         # 获取应用中的所有模型
         models = app_config.get_models()
-        
+
         for model in models:
             self.create_table_for_model(model, database)
 
     def create_table_for_model(self, model, database):
         # 获取数据库连接
         connection = connections[database]
-        
+
         # 获取模型对应的创建表SQL
         with connection.schema_editor() as schema_editor:
             try:
