@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.apps import apps
 from django.template import Template, Context
+from django.conf import settings
 import os
 
 
@@ -17,10 +18,39 @@ class Command(BaseCommand):
             help='Output directory for generated Vue files'
         )
 
+    # 添加根据菜单配置生成页面的方法
+    def generate_menu_pages(self):
+        """
+        根据菜单配置生成对应的Vue页面
+        """
+        if hasattr(settings, 'MENU_CONFIG'):
+            menu_config = settings.MENU_CONFIG
+            output_dir = './web/src/views/'
+            
+            for menu in menu_config:
+                if 'children' in menu:
+                    for child in menu['children']:
+                        component_path = child.get('component')
+                        if component_path:
+                            # 确保目录存在
+                            full_path = os.path.join(output_dir, component_path)
+                            dir_name = os.path.dirname(full_path)
+                            os.makedirs(dir_name, exist_ok=True)
+                            
+                            # 如果文件不存在，则创建一个基本的模板文件
+                            if not os.path.exists(full_path):
+                                with open(full_path, 'w', encoding='utf-8') as f:
+                                    f.write(f'<template>\n  <div>{component_path} 页面</div>\n</template>\n\n<script setup>\n// {component_path} 组件逻辑\n</script>\n')
+                                self.stdout.write(f'  Generated menu page: {component_path}')
+
     def handle(self, *args, **options):
         app_label = options['app_label']
         model_name = options['model_name']
         output_dir = options['output_dir']
+
+        # 添加调用生成菜单页面的方法
+        if not app_label and not model_name:
+            self.generate_menu_pages()
 
         try:
             # 如果没有提供app_label，则处理所有非Django自带的应用
@@ -102,8 +132,22 @@ class Command(BaseCommand):
         model_name = model.__name__
         app_label = model._meta.app_label
 
-        # 创建模型对应的目录
+        # 根据菜单配置生成正确的路径
         model_dir = os.path.join(output_dir, app_label, model_name.lower())
+        
+        # 检查是否在菜单配置中定义了特定路径
+        menu_path = None
+        if hasattr(settings, 'MENU_CONFIG'):
+            for menu in settings.MENU_CONFIG:
+                if 'children' in menu:
+                    for child in menu['children']:
+                        component_path = child.get('component', '')
+                        # 检查组件路径是否匹配当前模型
+                        if component_path.startswith(f'{app_label}/{model_name.lower()}/'):
+                            menu_path = os.path.join(output_dir, component_path)
+                            model_dir = os.path.dirname(menu_path)
+                            break
+        
         os.makedirs(model_dir, exist_ok=True)
 
         # 生成列表页面
@@ -134,7 +178,9 @@ class Command(BaseCommand):
                 display_fields.append(field)
 
         # 获取模板文件路径
-        template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+        # 修改模板路径为web目录下的templates
+        template_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'web',
+                                    'templates')
         list_template_path = os.path.join(template_dir, 'list_page_template.txt')
 
         # 读取模板文件
@@ -156,7 +202,10 @@ class Command(BaseCommand):
         fields = [f for f in model._meta.fields if f.name != 'id']
 
         # 获取模板文件路径
-        template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+        # 修改模板路径为web目录下的templates
+        # 修复路径拼接错误
+        template_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'web',
+                                    'templates')
         form_template_path = os.path.join(template_dir, 'form_page_template.txt')
 
         # 读取模板文件

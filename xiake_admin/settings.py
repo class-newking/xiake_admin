@@ -125,3 +125,8 @@ USE_TZ = False
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# 添加菜单配置
+MENU_CONFIG = [
+    {'name': '用户管理', "model": "user.UserInfo"}
+]
