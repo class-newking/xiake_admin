@@ -181,7 +181,7 @@ class Command(BaseCommand):
         # 修改模板路径为web目录下的templates
         template_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'web',
                                     'templates')
-        list_template_path = os.path.join(template_dir, 'list_page_template.txt')
+        list_template_path = os.path.join(template_dir, 'update_page_template.txt')
 
         # 读取模板文件
         with open(list_template_path, 'r', encoding='utf-8') as f:
@@ -206,7 +206,7 @@ class Command(BaseCommand):
         # 修复路径拼接错误
         template_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'web',
                                     'templates')
-        form_template_path = os.path.join(template_dir, 'form_page_template.txt')
+        form_template_path = os.path.join(template_dir, 'index_page_template.txt')
 
         # 读取模板文件
         with open(form_template_path, 'r', encoding='utf-8') as f:
